@@ -10,6 +10,13 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.28/dist/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
+<script>
+  const pass = prompt("Introduce la contraseña para acceder:");
+  if (pass !== "adminRifa2024") {
+    alert("Contraseña incorrecta. Redirigiendo...");
+    window.location.href = "public.html";
+  }
+</script>
   <h1>Administrador de Rifa</h1>
   <div class="controls">
     <button onclick="filtrar('todos')">Todos</button>

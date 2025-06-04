@@ -1,3 +1,5 @@
+import { jsPDF } from "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
+
 let datos = [];
 
 function inicializar() {
@@ -27,19 +29,35 @@ function renderizarTabla(lista) {
     const inputNombre = document.createElement("input");
     inputNombre.type = "text";
     inputNombre.value = item.nombre;
-    inputNombre.oninput = (e) => { datos[idx].nombre = e.target.value; };
+    inputNombre.disabled = item.nombre.trim() !== "";
+    inputNombre.oninput = (e) => {
+      datos[idx].nombre = e.target.value;
+    };
     celdaNombre.appendChild(inputNombre);
 
     const celdaPago = document.createElement("td");
     const checkPago = document.createElement("input");
     checkPago.type = "checkbox";
     checkPago.checked = item.pagado;
-    checkPago.onchange = (e) => { datos[idx].pagado = e.target.checked; };
+    checkPago.onchange = (e) => {
+      datos[idx].pagado = e.target.checked;
+    };
     celdaPago.appendChild(checkPago);
+
+    const celdaAccion = document.createElement("td");
+    const btnDesbloquear = document.createElement("button");
+    btnDesbloquear.textContent = "Desbloquear";
+    btnDesbloquear.onclick = () => {
+      inputNombre.disabled = false;
+      datos[idx].nombre = "";
+      inputNombre.value = "";
+    };
+    celdaAccion.appendChild(btnDesbloquear);
 
     fila.appendChild(celdaNum);
     fila.appendChild(celdaNombre);
     fila.appendChild(celdaPago);
+    fila.appendChild(celdaAccion);
     tbody.appendChild(fila);
   });
 }
@@ -59,17 +77,38 @@ function filtrar(tipo) {
   }
 }
 
-function generarPDF() {
-  let texto = "Listado de Rifa de Bisutería\n\n";
-  datos.forEach(d => {
-    texto += `${d.numero} - ${d.nombre || "Disponible"} - ${d.pagado ? "Pagado" : "Pendiente"}\n`;
+async function generarPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(14);
+  doc.text("Listado de Números de Rifa - Bisutería", 10, 10);
+
+  const headers = [["Número", "Nombre", "Pagado"]];
+  const rows = datos.map(d => [
+    d.numero,
+    d.nombre || "Disponible",
+    d.pagado ? "Sí" : "No"
+  ]);
+
+  doc.autoTable({
+    head: headers,
+    body: rows,
+    startY: 20
   });
 
-  const blob = new Blob([texto], { type: "application/pdf" });
+  doc.save("rifa_bisuteria.pdf");
+}
+
+function exportarCSV() {
+  const csv = ["Número,Nombre,Pagado"];
+  datos.forEach(d => {
+    csv.push(`${d.numero},"${d.nombre}",${d.pagado ? "Sí" : "No"}`);
+  });
+  const blob = new Blob([csv.join("\n")], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "rifa_bisuteria.pdf";
+  a.download = "rifa_bisuteria.csv";
   a.click();
 }
 

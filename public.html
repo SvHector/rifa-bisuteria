@@ -3,27 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Administrador de Rifa</title>
+  <title>Elegir Número - Rifa</title>
   <link rel="stylesheet" href="style.css" />
   <script type="module" src="firebase-config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.28/dist/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-  <h1>Administrador de Rifa</h1>
+  <h1>Selecciona tu número</h1>
   <div class="controls">
     <button onclick="filtrar('todos')">Todos</button>
     <button onclick="filtrar('libres')">Disponibles</button>
     <button onclick="filtrar('ocupados')">Ocupados</button>
-    <button onclick="generarPDF()">PDF</button>
-    <button onclick="exportarCSV()">CSV</button>
   </div>
   <table id="tabla">
     <thead>
       <tr>
         <th>Número</th>
         <th>Nombre</th>
-        <th>Pagado</th>
+        <th>Acción</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -53,31 +49,29 @@
         const inputNombre = document.createElement("input");
         inputNombre.type = "text";
         inputNombre.value = item.nombre;
-        inputNombre.oninput = (e) => {
-          datos[idx].nombre = e.target.value;
-          guardar();
-        };
+        inputNombre.disabled = item.nombre !== "";
         celdaNombre.appendChild(inputNombre);
 
-        const celdaPago = document.createElement("td");
-        const checkPago = document.createElement("input");
-        checkPago.type = "checkbox";
-        checkPago.checked = item.pagado;
-        checkPago.onchange = (e) => {
-          datos[idx].pagado = e.target.checked;
-          guardar();
+        const celdaAccion = document.createElement("td");
+        const btnGuardar = document.createElement("button");
+        btnGuardar.textContent = "Elegir";
+        btnGuardar.disabled = item.nombre !== "";
+        btnGuardar.onclick = () => {
+          if (inputNombre.value.trim() === "") {
+            alert("Por favor escribe tu nombre.");
+            return;
+          }
+          datos[idx].nombre = inputNombre.value.trim();
+          set(dbRef, datos);
+          alert("¡Número guardado!");
         };
-        celdaPago.appendChild(checkPago);
+        celdaAccion.appendChild(btnGuardar);
 
         fila.appendChild(celdaNum);
         fila.appendChild(celdaNombre);
-        fila.appendChild(celdaPago);
+        fila.appendChild(celdaAccion);
         tbody.appendChild(fila);
       });
-    }
-
-    function guardar() {
-      set(dbRef, datos);
     }
 
     function filtrar(tipo) {
@@ -85,27 +79,6 @@
       if (tipo === "libres") renderizarTabla(datos.filter(d => d.nombre === ""));
       if (tipo === "ocupados") renderizarTabla(datos.filter(d => d.nombre !== ""));
     }
-
-    window.generarPDF = () => {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      doc.setFontSize(14);
-      doc.text("Listado de Rifa - Bisutería", 10, 10);
-      const rows = datos.map(d => [d.numero, d.nombre || "Disponible", d.pagado ? "Sí" : "No"]);
-      doc.autoTable({ head: [["Número", "Nombre", "Pagado"]], body: rows, startY: 20 });
-      doc.save("rifa_bisuteria.pdf");
-    };
-
-    window.exportarCSV = () => {
-      const csv = ["Número,Nombre,Pagado"];
-      datos.forEach(d => csv.push(`${d.numero},"${d.nombre}",${d.pagado ? "Sí" : "No"}`));
-      const blob = new Blob([csv.join("\n")], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "rifa_bisuteria.csv";
-      a.click();
-    };
   </script>
 </body>
 </html>

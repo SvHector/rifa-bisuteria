@@ -3,9 +3,54 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Elegir Número - Rifa</title>
+  <title>Selecciona tu número</title>
   <link rel="stylesheet" href="style.css" />
   <script type="module" src="firebase-config.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f8ff;
+      padding: 20px;
+    }
+    h1 {
+      color: #075e54;
+      text-align: center;
+    }
+    .controls {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .controls button {
+      margin: 0 5px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      background-color: #26a69a;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    input[type="text"] {
+      padding: 5px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    input[readonly] {
+      background-color: #f2f2f2;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
   <h1>Selecciona tu número</h1>
@@ -14,7 +59,7 @@
     <button onclick="filtrar('libres')">Disponibles</button>
     <button onclick="filtrar('ocupados')">Ocupados</button>
   </div>
-  <table id="tabla">
+  <table>
     <thead>
       <tr>
         <th>Número</th>
@@ -22,7 +67,7 @@
         <th>Acción</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="tabla-body"></tbody>
   </table>
 
   <script type="module">
@@ -31,45 +76,46 @@
     const dbRef = ref(db, "rifa");
     let datos = [];
 
-    onValue(dbRef, (snapshot) => {
+    onValue(dbRef, snapshot => {
       datos = snapshot.val() || [];
       renderizarTabla(datos);
     });
 
+    function enmascarar(nombre) {
+      return nombre.split(" ")
+                   .map(p => p[0] + "*".repeat(p.length - 1))
+                   .join(" ");
+    }
+
     function renderizarTabla(lista) {
-      const tbody = document.querySelector("#tabla tbody");
+      const tbody = document.getElementById("tabla-body");
       tbody.innerHTML = "";
       lista.forEach((item, idx) => {
         const fila = document.createElement("tr");
 
-        const celdaNum = document.createElement("td");
-        celdaNum.textContent = item.numero;
+        const tdNum = document.createElement("td");
+        tdNum.textContent = item.numero;
 
-        const celdaNombre = document.createElement("td");
-        const inputNombre = document.createElement("input");
-        inputNombre.type = "text";
-        inputNombre.placeholder = "Tu nombre";
+        const tdNombre = document.createElement("td");
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = "Tu nombre";
 
-        if (item.nombre !== "") {
-          inputNombre.value = item.nombre
-            .split(" ")
-            .map(p => p[0] + "*".repeat(p.length - 1))
-            .join(" ");
-          inputNombre.readOnly = true;
-          inputNombre.style.userSelect = "none";
-          inputNombre.style.pointerEvents = "none";
+        const ocupado = item.nombre && item.nombre.trim() !== "";
+        if (ocupado) {
+          input.value = enmascarar(item.nombre);
+          input.readOnly = true;
         }
+        tdNombre.appendChild(input);
 
-        celdaNombre.appendChild(inputNombre);
-
-        const celdaAccion = document.createElement("td");
-        if (item.nombre !== "") {
-          celdaAccion.innerHTML = "<span style='color: gray;'>Ocupado</span>";
+        const tdAccion = document.createElement("td");
+        if (ocupado) {
+          tdAccion.innerHTML = "<span style='color: gray;'>Ocupado</span>";
         } else {
-          const btnGuardar = document.createElement("button");
-          btnGuardar.textContent = "Elegir";
-          btnGuardar.onclick = () => {
-            const nombreLimpio = inputNombre.value.trim();
+          const btn = document.createElement("button");
+          btn.textContent = "Elegir";
+          btn.onclick = () => {
+            const nombreLimpio = input.value.trim();
             if (nombreLimpio === "") {
               alert("Por favor escribe tu nombre.");
               return;
@@ -93,12 +139,12 @@
 
             alert("¡Número guardado!");
           };
-          celdaAccion.appendChild(btnGuardar);
+          tdAccion.appendChild(btn);
         }
 
-        fila.appendChild(celdaNum);
-        fila.appendChild(celdaNombre);
-        fila.appendChild(celdaAccion);
+        fila.appendChild(tdNum);
+        fila.appendChild(tdNombre);
+        fila.appendChild(tdAccion);
         tbody.appendChild(fila);
       });
     }

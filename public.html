@@ -37,67 +37,72 @@
     });
 
     function renderizarTabla(lista) {
-  const tbody = document.querySelector("#tabla tbody");
-  tbody.innerHTML = "";
-  lista.forEach((item, idx) => {
-    const fila = document.createElement("tr");
+      const tbody = document.querySelector("#tabla tbody");
+      tbody.innerHTML = "";
+      lista.forEach((item, idx) => {
+        const fila = document.createElement("tr");
 
-    // Número
-    const celdaNum = document.createElement("td");
-    celdaNum.textContent = item.numero;
+        const celdaNum = document.createElement("td");
+        celdaNum.textContent = item.numero;
 
-    // Nombre
-    const celdaNombre = document.createElement("td");
-    const inputNombre = document.createElement("input");
-    inputNombre.type = "text";
-    inputNombre.value = item.nombre;
-    inputNombre.placeholder = "Tu nombre";
-    inputNombre.disabled = item.nombre !== "";
-    celdaNombre.appendChild(inputNombre);
+        const celdaNombre = document.createElement("td");
+        const inputNombre = document.createElement("input");
+        inputNombre.type = "text";
+        inputNombre.placeholder = "Tu nombre";
 
-    // Acción
-    const celdaAccion = document.createElement("td");
-    if (item.nombre !== "") {
-      celdaAccion.innerHTML = "<span style='color: gray;'>Ocupado</span>";
-    } else {
-      const btnGuardar = document.createElement("button");
-      btnGuardar.textContent = "Elegir";
-      btnGuardar.onclick = () => {
-        const nombreLimpio = inputNombre.value.trim();
-        if (nombreLimpio === "") {
-          alert("Por favor escribe tu nombre.");
-          return;
+        if (item.nombre !== "") {
+          inputNombre.value = item.nombre
+            .split(" ")
+            .map(p => p[0] + "*".repeat(p.length - 1))
+            .join(" ");
+          inputNombre.readOnly = true;
+          inputNombre.style.userSelect = "none";
+          inputNombre.style.pointerEvents = "none";
         }
 
-        // Validar que aún esté disponible antes de guardar
-        if (datos[idx].nombre !== "") {
-          alert("Este número ya fue ocupado por otra persona.");
-          return;
+        celdaNombre.appendChild(inputNombre);
+
+        const celdaAccion = document.createElement("td");
+        if (item.nombre !== "") {
+          celdaAccion.innerHTML = "<span style='color: gray;'>Ocupado</span>";
+        } else {
+          const btnGuardar = document.createElement("button");
+          btnGuardar.textContent = "Elegir";
+          btnGuardar.onclick = () => {
+            const nombreLimpio = inputNombre.value.trim();
+            if (nombreLimpio === "") {
+              alert("Por favor escribe tu nombre.");
+              return;
+            }
+
+            if (datos[idx].nombre !== "") {
+              alert("Este número ya fue ocupado por otra persona.");
+              return;
+            }
+
+            datos[idx].nombre = nombreLimpio;
+            set(dbRef, datos);
+
+            const fecha = new Date().toISOString();
+            const bitacoraRef = ref(db, "bitacora/" + fecha.replaceAll(":", "-"));
+            set(bitacoraRef, {
+              numero: item.numero,
+              nombre: nombreLimpio,
+              fecha: fecha
+            });
+
+            alert("¡Número guardado!");
+          };
+          celdaAccion.appendChild(btnGuardar);
         }
 
-        datos[idx].nombre = nombreLimpio;
-        set(dbRef, datos);
-
-        // Guardar en bitácora
-        const fecha = new Date().toISOString();
-        const bitacoraRef = ref(db, "bitacora/" + fecha.replaceAll(":", "-"));
-        set(bitacoraRef, {
-          numero: item.numero,
-          nombre: nombreLimpio,
-          fecha: fecha
-        });
-
-        alert("¡Número guardado!");
-      };
-      celdaAccion.appendChild(btnGuardar);
+        fila.appendChild(celdaNum);
+        fila.appendChild(celdaNombre);
+        fila.appendChild(celdaAccion);
+        tbody.appendChild(fila);
+      });
     }
 
-    fila.appendChild(celdaNum);
-    fila.appendChild(celdaNombre);
-    fila.appendChild(celdaAccion);
-    tbody.appendChild(fila);
-  });
-}
     function filtrar(tipo) {
       if (tipo === "todos") renderizarTabla(datos);
       if (tipo === "libres") renderizarTabla(datos.filter(d => d.nombre === ""));

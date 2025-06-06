@@ -48,9 +48,8 @@
         const celdaNombre = document.createElement("td");
         const inputNombre = document.createElement("input");
         inputNombre.type = "text";
-        inputNombre.placeholder = "Tu nombre";
+        inputNombre.value = item.nombre;
         inputNombre.disabled = item.nombre !== "";
-									  
         celdaNombre.appendChild(inputNombre);
 
         const celdaAccion = document.createElement("td");

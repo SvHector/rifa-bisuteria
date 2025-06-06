@@ -1,64 +1,13 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Selecciona tu número</title>
-  <link rel="stylesheet" href="style.css" />
   <script type="module" src="firebase-config.js"></script>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f0f8ff;
-      padding: 20px;
-    }
-    h1 {
-      color: #075e54;
-      text-align: center;
-    }
-    .controls {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .controls button {
-      margin: 0 5px;
-      padding: 8px 14px;
-      border-radius: 6px;
-      border: none;
-      background-color: #26a69a;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #ddd;
-      text-align: center;
-    }
-    input[type="text"] {
-      padding: 5px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-    input[readonly] {
-      background-color: #f2f2f2;
-      color: #555;
-    }
-  </style>
 </head>
 <body>
-  <h1>Selecciona tu número</h1>
-  <div class="controls">
-    <button onclick="filtrar('todos')">Todos</button>
-    <button onclick="filtrar('libres')">Disponibles</button>
-    <button onclick="filtrar('ocupados')">Ocupados</button>
-  </div>
   <table>
     <thead>
       <tr>
@@ -72,88 +21,10 @@
 
   <script type="module">
     import { db, ref, onValue, set } from './firebase-config.js';
-
     const dbRef = ref(db, "rifa");
     let datos = [];
-
-    onValue(dbRef, snapshot => {
-      datos = snapshot.val() || [];
-      renderizarTabla(datos);
-    });
-
-    function enmascarar(nombre) {
-      return nombre.split(" ")
-                   .map(p => p[0] + "*".repeat(p.length - 1))
-                   .join(" ");
-    }
-
-    function renderizarTabla(lista) {
-      const tbody = document.getElementById("tabla-body");
-      tbody.innerHTML = "";
-      lista.forEach((item, idx) => {
-        const fila = document.createElement("tr");
-
-        const tdNum = document.createElement("td");
-        tdNum.textContent = item.numero;
-
-        const tdNombre = document.createElement("td");
-        const input = document.createElement("input");
-        input.type = "text";
-        input.placeholder = "Tu nombre";
-
-        const ocupado = item.nombre && item.nombre.trim() !== "";
-        if (ocupado) {
-          input.value = enmascarar(item.nombre);
-          input.readOnly = true;
-        }
-        tdNombre.appendChild(input);
-
-        const tdAccion = document.createElement("td");
-        if (ocupado) {
-          tdAccion.innerHTML = "<span style='color: gray;'>Ocupado</span>";
-        } else {
-          const btn = document.createElement("button");
-          btn.textContent = "Elegir";
-          btn.onclick = () => {
-            const nombreLimpio = input.value.trim();
-            if (nombreLimpio === "") {
-              alert("Por favor escribe tu nombre.");
-              return;
-            }
-
-            if (datos[idx].nombre !== "") {
-              alert("Este número ya fue ocupado por otra persona.");
-              return;
-            }
-
-            datos[idx].nombre = nombreLimpio;
-            set(dbRef, datos);
-
-            const fecha = new Date().toISOString();
-            const bitacoraRef = ref(db, "bitacora/" + fecha.replaceAll(":", "-"));
-            set(bitacoraRef, {
-              numero: item.numero,
-              nombre: nombreLimpio,
-              fecha: fecha
-            });
-
-            alert("¡Número guardado!");
-          };
-          tdAccion.appendChild(btn);
-        }
-
-        fila.appendChild(tdNum);
-        fila.appendChild(tdNombre);
-        fila.appendChild(tdAccion);
-        tbody.appendChild(fila);
-      });
-    }
-
-    function filtrar(tipo) {
-      if (tipo === "todos") renderizarTabla(datos);
-      if (tipo === "libres") renderizarTabla(datos.filter(d => d.nombre === ""));
-      if (tipo === "ocupados") renderizarTabla(datos.filter(d => d.nombre !== ""));
-    }
+    const raw = snapshot.val() || {};
+    datos = Object.values(raw);
   </script>
 </body>
 </html>

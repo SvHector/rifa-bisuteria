@@ -50,16 +50,7 @@
         inputNombre.type = "text";
         inputNombre.placeholder = "Tu nombre";
         inputNombre.disabled = item.nombre !== "";
-
-		        if (item.nombre !== "") {
-          inputNombre.value = item.nombre
-            .split(" ")
-            .map(p => p[0] + "*".repeat(p.length - 1))
-            .join(" ");
-          inputNombre.readOnly = true;
-          inputNombre.style.userSelect = "none";
-          inputNombre.style.pointerEvents = "none";
-        }											  
+									  
         celdaNombre.appendChild(inputNombre);
 
         const celdaAccion = document.createElement("td");

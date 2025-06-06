@@ -1,14 +1,20 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Selecciona tu número</title>
+  <title>Elegir Número - Rifa</title>
+  <link rel="stylesheet" href="style.css" />
   <script type="module" src="firebase-config.js"></script>
 </head>
 <body>
-  <table>
+  <h1>Selecciona tu número</h1>
+  <div class="controls">
+    <button onclick="filtrar('todos')">Todos</button>
+    <button onclick="filtrar('libres')">Disponibles</button>
+    <button onclick="filtrar('ocupados')">Ocupados</button>
+  </div>
+  <table id="tabla">
     <thead>
       <tr>
         <th>Número</th>
@@ -16,15 +22,63 @@
         <th>Acción</th>
       </tr>
     </thead>
-    <tbody id="tabla-body"></tbody>
+    <tbody></tbody>
   </table>
 
   <script type="module">
     import { db, ref, onValue, set } from './firebase-config.js';
+
     const dbRef = ref(db, "rifa");
     let datos = [];
-    const raw = snapshot.val() || {};
-    datos = Object.values(raw);
+
+    onValue(dbRef, (snapshot) => {
+      datos = snapshot.val() || [];
+      renderizarTabla(datos);
+    });
+
+    function renderizarTabla(lista) {
+      const tbody = document.querySelector("#tabla tbody");
+      tbody.innerHTML = "";
+      lista.forEach((item, idx) => {
+        const fila = document.createElement("tr");
+
+        const celdaNum = document.createElement("td");
+        celdaNum.textContent = item.numero;
+
+        const celdaNombre = document.createElement("td");
+        const inputNombre = document.createElement("input");
+        inputNombre.type = "text";
+        inputNombre.value = item.nombre;
+        inputNombre.disabled = item.nombre !== "";
+        celdaNombre.appendChild(inputNombre);
+
+        const celdaAccion = document.createElement("td");
+        const btnGuardar = document.createElement("button");
+        btnGuardar.textContent = "Elegir";
+        btnGuardar.disabled = item.nombre !== "";
+        btnGuardar.onclick = () => {
+          if (inputNombre.value.trim() === "") {
+            alert("Por favor escribe tu nombre.");
+            return;
+          }
+          datos[idx].nombre = inputNombre.value.trim();
+          set(dbRef, datos);
+          alert("¡Número guardado!");
+        };
+        celdaAccion.appendChild(btnGuardar);
+
+        fila.appendChild(celdaNum);
+        fila.appendChild(celdaNombre);
+        fila.appendChild(celdaAccion);
+        tbody.appendChild(fila);
+      });
+    }
+
+    function filtrar(tipo) {
+      if (tipo === "todos") renderizarTabla(datos);
+      if (tipo === "libres") renderizarTabla(datos.filter(d => d.nombre === ""));
+      if (tipo === "ocupados") renderizarTabla(datos.filter(d => d.nombre !== ""));
+    }
   </script>
 </body>
 </html>

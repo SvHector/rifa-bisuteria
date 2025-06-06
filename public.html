@@ -36,6 +36,13 @@
       renderizarTabla(datos);
     });
 
+    function enmascararNombre(nombre) {
+  return nombre
+    .split(" ")
+    .map(palabra => palabra.length > 0 ? palabra[0] + "*".repeat(palabra.length - 1) : "")
+    .join(" ");
+    }
+
     function renderizarTabla(lista) {
       const tbody = document.querySelector("#tabla tbody");
       tbody.innerHTML = "";
@@ -48,7 +55,7 @@
         const celdaNombre = document.createElement("td");
         const inputNombre = document.createElement("input");
         inputNombre.type = "text";
-        inputNombre.value = item.nombre;
+        inputNombre.value = item.nombre !== "" ? enmascararNombre(item.nombre) : "";
         inputNombre.disabled = item.nombre !== "";
         celdaNombre.appendChild(inputNombre);
 

@@ -48,24 +48,53 @@
         const celdaNombre = document.createElement("td");
         const inputNombre = document.createElement("input");
         inputNombre.type = "text";
-        inputNombre.value = item.nombre;
-        inputNombre.disabled = item.nombre !== "";
+        inputNombre.placeholder = "Tu nombre";
+
+        if (item.nombre !== "") {
+          inputNombre.value = item.nombre
+            .split(" ")
+            .map(p => p[0] + "*".repeat(p.length - 1))
+            .join(" ");
+          inputNombre.readOnly = true;
+          inputNombre.style.userSelect = "none";
+          inputNombre.style.pointerEvents = "none";
+        }
+
         celdaNombre.appendChild(inputNombre);
 
         const celdaAccion = document.createElement("td");
-        const btnGuardar = document.createElement("button");
-        btnGuardar.textContent = "Elegir";
-        btnGuardar.disabled = item.nombre !== "";
-        btnGuardar.onclick = () => {
-          if (inputNombre.value.trim() === "") {
-            alert("Por favor escribe tu nombre.");
-            return;
-          }
-          datos[idx].nombre = inputNombre.value.trim();
-          set(dbRef, datos);
-          alert("¡Número guardado!");
-        };
-        celdaAccion.appendChild(btnGuardar);
+        if (item.nombre !== "") {
+          celdaAccion.innerHTML = "<span style='color: gray;'>Ocupado</span>";
+        } else {
+          const btnGuardar = document.createElement("button");
+          btnGuardar.textContent = "Elegir";
+          btnGuardar.onclick = () => {
+            const nombreLimpio = inputNombre.value.trim();
+            if (nombreLimpio === "") {
+              alert("Por favor escribe tu nombre.");
+              return;
+            }
+
+            if (datos[idx].nombre !== "") {
+              alert("Este número ya fue ocupado por otra persona.");
+              return;
+            }
+
+            datos[idx].nombre = nombreLimpio;
+            set(dbRef, datos);
+
+            const fecha = new Date().toISOString();
+            const bitacoraRef = ref(db, "bitacora/" + fecha.replaceAll(":", "-"));
+            set(bitacoraRef, {
+              numero: item.numero,
+              nombre: nombreLimpio,
+              fecha: fecha
+            });
+
+            alert("¡Número guardado!");
+          };
+          celdaAccion.appendChild(btnGuardar);
+        }
 
         fila.appendChild(celdaNum);
         fila.appendChild(celdaNombre);
